@@ -73,34 +73,11 @@
             opacity: 0.7;
         }
 
-        /* MONTHS NAV */
-        #months-nav {
-            position: absolute;
-            top: 80px;
-            left: 16px;
-            width: 100px;
-            font-size: 12px;
-            line-height: 1.8;
-        }
-
-        #months-nav a {
-            display: block;
-            color: #0af;
-            text-decoration: underline;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        #months-nav a:hover {
-            color: #fff;
-            text-shadow: 0 0 5px #0af;
-        }
-
         /* MAIN DATA LIST */
         #data-main {
             position: absolute;
             top: 80px;
-            left: 130px;
+            left: 16px;
             bottom: 20px;
             width: 420px;
             font-size: 11px;
@@ -242,21 +219,6 @@
         <div id="status">ініціалізація...</div>
 
         <div id="heatmap"></div>
-
-        <div id="months-nav" class="interactive">
-            <a onclick="updateFilter('JAN')">JANUARY</a>
-            <a onclick="updateFilter('FEB')">FEBRUARY</a>
-            <a onclick="updateFilter('MAR')">MARCH</a>
-            <a onclick="updateFilter('APR')">APRIL</a>
-            <a onclick="updateFilter('MAY')">MAY</a>
-            <a onclick="updateFilter('JUN')">JUNE</a>
-            <a onclick="updateFilter('JUL')">JULY</a>
-            <a onclick="updateFilter('AUG')">AUGUST</a>
-            <a onclick="updateFilter('SEP')">SEPTEMBER</a>
-            <a onclick="updateFilter('OCT')">OCTOBER</a>
-            <a onclick="updateFilter('NOV')">NOVEMBER</a>
-            <a onclick="updateFilter('DEC')">DECEMBER</a>
-        </div>
 
         <div id="data-main" class="interactive"></div>
         <div id="clock">—</div>
