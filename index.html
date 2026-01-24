@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <title>COSMIC CHAOS x SOLAR MONITOR · ARCHIVE 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        /* ------------------------------------------------------------------
+           CORE STYLES - COSMIC EDITION
+           ------------------------------------------------------------------ */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            height: 100%;
+            font-family: 'Courier New', monospace;
+            color: #0af;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* UI CONTAINER */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* HEADER & HUD */
+        #hud {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            font-size: 13px;
+            opacity: 0.8;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
+            font-weight: bold;
+        }
+
+        #hud-sub {
+            position: absolute;
+            top: 32px;
+            left: 16px;
+            font-size: 11px;
+            opacity: 0.6;
+            color: #6cf;
+        }
+
+        #status {
+            position: absolute;
+            top: 50px;
+            left: 16px;
+            font-size: 11px;
+            color: #0f0;
+            opacity: 0.7;
+        }
+
+        /* MONTHS NAV */
+        #months-nav {
+            position: absolute;
+            top: 80px;
+            left: 16px;
+            width: 100px;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        #months-nav a {
+            display: block;
+            color: #0af;
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        #months-nav a:hover {
+            color: #fff;
+            text-shadow: 0 0 5px #0af;
+        }
+
+        /* MAIN DATA LIST */
+        #data-main {
+            position: absolute;
+            top: 80px;
+            left: 130px;
+            bottom: 20px;
+            width: 420px;
+            font-size: 11px;
+            line-height: 1.1;
+            letter-spacing: -0.2px;
+            overflow-y: auto;
+            color: #0f0;
+            display: block;
+            padding-right: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: #004466 #001122;
+        }
+
+        /* HEATMAP */
+        #heatmap {
+            position: absolute;
+            top: 80px;
+            right: 650px;
+            display: grid;
+            grid-template-columns: repeat(8, 14px);
+            gap: 2px;
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .heatcell {
+            width: 14px;
+            height: 14px;
+            background: #0f0;
+            border: 1px solid #333;
+            transition: background 0.3s;
+        }
+
+        /* FOOTER */
+        #clock {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            font-size: 11px;
+            opacity: 0.5;
+            color: #6cf;
+            text-align: right;
+            line-height: 1.3;
+        }
+
+        /* DATA STYLING */
+        .category {
+            margin: 12px 0 6px 0;
+            font-size: 12px;
+            color: #0af;
+            font-weight: bold;
+            border-bottom: 2px solid #004466;
+            padding-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        .row {
+            white-space: pre;
+            opacity: 0.9;
+            margin-bottom: 2px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .label {
+            color: #6cf;
+        }
+
+        .val {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .val-safe {
+            color: #0f0;
+        }
+
+        .val-watch {
+            color: #ffd700;
+        }
+
+        .val-warn {
+            color: #ff8c00;
+        }
+
+        .val-danger {
+            color: #f00;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #001122;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #004466;
+        }
+
+        @media (max-width: 800px) {
+            #months-nav {
+                top: 70px;
+                left: 16px;
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                height: auto;
+            }
+
+            #data-main {
+                top: 200px;
+                left: 16px;
+                right: 16px;
+                width: auto;
+                background: rgba(0, 0, 0, 0.7);
+            }
+
+            #heatmap {
+                top: 50px;
+                left: 16px;
+                right: 16px;
+                grid-template-columns: repeat(auto-fill, 14px);
+                width: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="c"></canvas>
+
+    <div id="ui-layer">
+        <div id="hud">COSMIC ARCHIVE 2026.plasma.audit.</div>
+        <div id="hud-sub">solar monitoring · heliosphere · project 2026</div>
+        <div id="status">ініціалізація...</div>
+
+        <div id="heatmap"></div>
+
+        <div id="months-nav" class="interactive">
+            <a onclick="updateFilter('JAN')">JANUARY</a>
+            <a onclick="updateFilter('FEB')">FEBRUARY</a>
+            <a onclick="updateFilter('MAR')">MARCH</a>
+            <a onclick="updateFilter('APR')">APRIL</a>
+            <a onclick="updateFilter('MAY')">MAY</a>
+            <a onclick="updateFilter('JUN')">JUNE</a>
+            <a onclick="updateFilter('JUL')">JULY</a>
+            <a onclick="updateFilter('AUG')">AUGUST</a>
+            <a onclick="updateFilter('SEP')">SEPTEMBER</a>
+            <a onclick="updateFilter('OCT')">OCTOBER</a>
+            <a onclick="updateFilter('NOV')">NOVEMBER</a>
+            <a onclick="updateFilter('DEC')">DECEMBER</a>
+        </div>
+
+        <div id="data-main" class="interactive"></div>
+        <div id="clock">—</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        const dataDiv = document.getElementById('data-main');
+        const statusDiv = document.getElementById('status');
+        const clockDiv = document.getElementById('clock');
+        const heatmapDiv = document.getElementById('heatmap');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const startTime = Date.now();
+        function formatRelativeTime(ms) {
+            const s = Math.floor(ms / 1000);
+            if (s < 60) return `+${s}s`;
+            const m = Math.floor(s / 60); const sec = s % 60;
+            if (m < 60) return `+${m}m ${sec}s`;
+            const h = Math.floor(m / 60); const min = m % 60;
+            return `+${h}h ${min}m`;
+        }
+        function updateClock() {
+            const now = new Date();
+            clockDiv.innerHTML = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}<br>${formatRelativeTime(Date.now() - startTime)}`;
+        }
+        setInterval(updateClock, 1000); updateClock();
+
+        const proxy = 'https://corsproxy.io/?';
+
+        // --- PURE COSMIC STATE ---
+        let cosmicData = {
+            plasma_speed: 400,
+            plasma_density: 5,
+            plasma_temp: 100000,
+            plasma_pressure: 1.5,
+            mag_bt: 5,
+            mag_bz: 0,
+            kp_index: 2,
+            dst_index: -10,
+            f107_flux: 150,
+            sunspot_num: 80,
+            xray_flux: 1e-7,
+            proton_flux: 0.1,
+            electron_flux: 100,
+            solar_g: 0,
+            solar_s: 0,
+            solar_r: 0,
+            convi_idx: 0
+        };
+
+        const HISTORY_LIMIT = 50;
+        let histories = {
+            speed: [], density: [], temp: [],
+            bz: [], bt: [], kp: [], dst: [],
+            xray: [], proton: [], electron: [],
+            pressure: [], convi: []
+        };
+
+        let heatmapValues = [];
+
+        // BACKGROUND ELEMENTS
+        const stars = [];
+        for (let i = 0; i < 400; i++) stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 1.5 + 0.5,
+            baseAlpha: Math.random() * 0.5 + 0.2,
+            twinkle: Math.random() * 0.02 + 0.005
+        });
+
+        const formulas = ["λ = h/p", "E = hν", "Gμν + Λgμν = 8πG/c⁴ Tμν", "∇·B = 0", "F = q(E + v×B)", "r_s = 2GM/c²", "P_dyn = ρv²"];
+        const formulaObjs = formulas.map(f => ({
+            text: f, x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
+            alpha: 0, phase: Math.random() * 6.28
+        }));
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        function getColorClass(value, thresholds) {
+            if (value === '--' || value === null || value === undefined) return 'val-safe';
+            let v = parseFloat(value);
+            if (isNaN(v)) return 'val-safe';
+            if (thresholds.danger !== undefined && v >= thresholds.danger) return 'val-danger';
+            if (thresholds.warn !== undefined && v >= thresholds.warn) return 'val-warn';
+            if (thresholds.watch !== undefined && v >= thresholds.watch) return 'val-watch';
+            // Specific for negative values like Dst or Bz
+            if (thresholds.danger_neg !== undefined && v <= thresholds.danger_neg) return 'val-danger';
+            return 'val-safe';
+        }
+
+        function getColor(value, thresholds) {
+            const cls = getColorClass(value, thresholds);
+            switch (cls) {
+                case 'val-safe': return '#0f0';
+                case 'val-watch': return '#ffd700';
+                case 'val-warn': return '#ff8c00';
+                case 'val-danger': return '#f00';
+                default: return '#0f0';
+            }
+        }
+
+        function updateHeatmap() {
+            heatmapDiv.innerHTML = '';
+            heatmapValues.slice(0, 48).forEach(val => {
+                const cell = document.createElement('div');
+                cell.className = 'heatcell';
+                cell.style.background = val.color;
+                heatmapDiv.appendChild(cell);
+            });
+        }
+
+        async function fetchWithProxy(url) {
+            try {
+                let r = await fetch(proxy + encodeURIComponent(url));
+                if (r.ok) return await r.json();
+            } catch (e) { console.error("Fetch failed", url); }
+            return null;
+        }
+
+        function updateHistory(key, val) {
+            if (!histories[key]) histories[key] = [];
+            histories[key].push(val);
+            if (histories[key].length > HISTORY_LIMIT) histories[key].shift();
+        }
+
+        async function fetchCosmicData() {
+            statusDiv.innerHTML = 'сканування геліосфери...';
+            let html = '';
+            let loaded = 0;
+            heatmapValues = [];
+
+            // 1. SOLAR WIND PLASMA (Speed, Density, Temp)
+            const plasma = await fetchWithProxy('https://services.swpc.noaa.gov/products/solar-wind/plasma-5-minute.json');
+            if (plasma && plasma.length > 1) {
+                const last = plasma[plasma.length - 1];
+                cosmicData.plasma_density = parseFloat(last[1]) || 5;
+                cosmicData.plasma_speed = parseFloat(last[2]) || 400;
+                cosmicData.plasma_temp = parseFloat(last[3]) || 100000;
+                cosmicData.plasma_pressure = (1.67e-6 * cosmicData.plasma_density * Math.pow(cosmicData.plasma_speed, 2)).toFixed(2);
+
+                updateHistory('speed', cosmicData.plasma_speed);
+                updateHistory('density', cosmicData.plasma_density);
+                updateHistory('temp', cosmicData.plasma_temp);
+                updateHistory('pressure', parseFloat(cosmicData.plasma_pressure));
+
+                html += '<div class="category">SOLAR WIND PLASMA</div>';
+                const metrics = [
+                    { label: 'Speed', val: cosmicData.plasma_speed, unit: ' km/s', thr: { watch: 500, warn: 700, danger: 900 } },
+                    { label: 'Density', val: cosmicData.plasma_density, unit: ' p/cm³', thr: { watch: 15, warn: 25, danger: 40 } },
+                    { label: 'Pressure', val: cosmicData.plasma_pressure, unit: ' nPa', thr: { watch: 5, warn: 10, danger: 20 } },
+                    { label: 'Temperature', val: (cosmicData.plasma_temp / 1000).toFixed(1), unit: ' kK', thr: { watch: 200, warn: 500, danger: 800 } }
+                ];
+                metrics.forEach(m => {
+                    html += `<div class="row"><span class="label">${m.label}</span><span class="val ${getColorClass(m.val, m.thr)}">${m.val}${m.unit}</span></div>`;
+                    heatmapValues.push({ color: getColor(m.val, m.thr) });
+                    loaded++;
+                });
+            }
+
+            // 2. MAGNETOMETER (Bt, Bz)
+            const mag = await fetchWithProxy('https://services.swpc.noaa.gov/products/solar-wind/mag-5-minute.json');
+            const goesMag = await fetchWithProxy('https://services.swpc.noaa.gov/json/goes/primary/magnetometer-latest.json');
+
+            if (mag && mag.length > 1) {
+                const last = mag[mag.length - 1];
+                cosmicData.mag_bt = parseFloat(last[6]) || 5;
+                cosmicData.mag_bz = parseFloat(last[3]) || 0;
+
+                updateHistory('bt', cosmicData.mag_bt);
+                updateHistory('bz', cosmicData.mag_bz);
+
+                html += '<div class="category">INTERPLANETARY MAG FIELD</div>';
+                const metrics = [
+                    { label: 'Bt (Total)', val: cosmicData.mag_bt, unit: ' nT', thr: { watch: 10, warn: 20, danger: 35 } },
+                    { label: 'Bz (Z-Comp)', val: cosmicData.mag_bz, unit: ' nT', thr: { danger_neg: -10 } }
+                ];
+                metrics.forEach(m => {
+                    html += `<div class="row"><span class="label">${m.label}</span><span class="val ${getColorClass(m.val, m.thr)}">${m.val.toFixed(2)}${m.unit}</span></div>`;
+                    heatmapValues.push({ color: getColor(m.val, m.thr) });
+                    loaded++;
+                });
+            }
+            if (goesMag && goesMag.length > 0) {
+                let lastH = goesMag[goesMag.length - 1].Hp || 0;
+                html += `<div class="row"><span class="label">GOES Hp (Local)</span><span class="val">${lastH.toFixed(2)} nT</span></div>`;
+                loaded++;
+            }
+
+            // 3. GEOMAGNETIC INDICES (Kp, Dst)
+            const kpData = await fetchWithProxy('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
+            const scalesData = await fetchWithProxy('https://services.swpc.noaa.gov/products/noaa-scales.json');
+
+            if (kpData && kpData.length > 1) {
+                cosmicData.kp_index = parseFloat(kpData[kpData.length - 1][1]) || 0;
+                updateHistory('kp', cosmicData.kp_index);
+                html += '<div class="category">GEOMAGNETIC ACTIVITY</div>';
+                html += `<div class="row"><span class="label">Kp Index</span><span class="val ${getColorClass(cosmicData.kp_index, { watch: 4, warn: 5, danger: 7 })}">${cosmicData.kp_index}</span></div>`;
+                heatmapValues.push({ color: getColor(cosmicData.kp_index, { watch: 4, warn: 5, danger: 7 }) });
+                loaded++;
+            }
+
+            const dstData = await fetchWithProxy('https://services.swpc.noaa.gov/products/kyoto-dst.json');
+            if (dstData && dstData.length > 0) {
+                cosmicData.dst_index = parseFloat(dstData[dstData.length - 1][1]) || 0;
+                updateHistory('dst', cosmicData.dst_index);
+                html += `<div class="row"><span class="label">Dst Index</span><span class="val ${getColorClass(cosmicData.dst_index, { danger_neg: -100 })}">${cosmicData.dst_index} nT</span></div>`;
+                heatmapValues.push({ color: getColor(cosmicData.dst_index, { danger_neg: -100 }) });
+                loaded++;
+            }
+
+            if (scalesData && (scalesData["0"] || scalesData[0])) {
+                let s = scalesData["0"] || scalesData[0];
+                cosmicData.solar_g = s.G ? s.G.Scale : 0;
+                cosmicData.solar_r = s.R ? s.R.Scale : 0;
+                cosmicData.solar_s = s.S ? s.S.Scale : 0;
+                html += `<div class="row"><span class="label">G-Scale (Storm)</span><span class="val">G${cosmicData.solar_g}</span></div>`;
+                html += `<div class="row"><span class="label">R-Scale (Flare)</span><span class="val">R${cosmicData.solar_r}</span></div>`;
+                loaded += 2;
+            }
+
+            // 4. SOLAR INDICES (F10.7, Sunspots)
+            const solarInd = await fetchWithProxy('https://services.swpc.noaa.gov/products/summary/solar-indices.json');
+            if (solarInd) {
+                cosmicData.f107_flux = solarInd.f107 || 150;
+                cosmicData.sunspot_num = solarInd.sunspot_count || 80;
+                html += '<div class="category">SOLAR FLUX & SUNSPOTS</div>';
+                html += `<div class="row"><span class="label">F10.7 Flux</span><span class="val">${cosmicData.f107_flux} sfu</span></div>`;
+                html += `<div class="row"><span class="label">Sunspot Num</span><span class="val">${cosmicData.sunspot_num}</span></div>`;
+                heatmapValues.push({ color: '#0af' });
+                heatmapValues.push({ color: '#0af' });
+                loaded += 2;
+            }
+
+            // 5. ENERGETIC PARTICLES (Protons, Electrons)
+            const protons = await fetchWithProxy('https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json');
+            const electrons = await fetchWithProxy('https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json');
+
+            if (protons && protons.length > 0) {
+                const last = protons[protons.length - 1];
+                cosmicData.proton_flux = last['>10MeV'] || 0.1;
+                updateHistory('proton', cosmicData.proton_flux);
+                html += '<div class="category">ENERGETIC PARTICLES</div>';
+                html += `<div class="row"><span class="label">Proton (>10MeV)</span><span class="val">${cosmicData.proton_flux.toFixed(3)}</span></div>`;
+                heatmapValues.push({ color: '#0af' });
+                loaded++;
+            }
+            if (electrons && electrons.length > 0) {
+                const last = electrons[electrons.length - 1];
+                cosmicData.electron_flux = last['>2MeV'] || 100;
+                updateHistory('electron', cosmicData.electron_flux);
+                html += `<div class="row"><span class="label">Electron (>2MeV)</span><span class="val">${cosmicData.electron_flux.toFixed(1)}</span></div>`;
+                heatmapValues.push({ color: '#0af' });
+                loaded++;
+            }
+
+            // 6. X-RAY FLARES & CONVI
+            const xray = await fetchWithProxy('https://services.swpc.noaa.gov/json/goes/primary/xray-flares-latest.json');
+            if (xray && xray.length > 0) {
+                const last = xray[0];
+                html += '<div class="category">X-RAY FLARE MONITOR</div>';
+                html += `<div class="row"><span class="label">Latest Class</span><span class="val ${last.class_type === 'X' ? 'val-danger' : (last.class_type === 'M' ? 'val-warn' : '')}">${last.class_type}${last.flare_level}</span></div>`;
+                heatmapValues.push({ color: (last.class_type === 'M' || last.class_type === 'X') ? '#f00' : '#0f0' });
+                loaded++;
+            }
+
+            // CONVI CALC (Visibility/Heliophysical Index)
+            let cScore = ((cosmicData.plasma_speed / 1000) + (cosmicData.kp_index / 9) + (Math.abs(cosmicData.mag_bz) / 20)) / 3;
+            cosmicData.convi_idx = (cScore * 100).toFixed(1);
+            updateHistory('convi', parseFloat(cosmicData.convi_idx));
+            html += '<div class="category">CONVI MONITOR AGENT</div>';
+            html += `<div class="row"><span class="label">CONVI Index</span><span class="val">${cosmicData.convi_idx}%</span></div>`;
+            heatmapValues.push({ color: '#0ff' });
+            loaded++;
+
+            // 7. CALC CHAOS
+            let speedVar = histories.speed.length > 2 ? Math.abs(histories.speed[histories.speed.length - 1] - histories.speed[histories.speed.length - 2]) / 10 : 0;
+            let bzVar = histories.bz.length > 2 ? Math.abs(histories.bz[histories.bz.length - 1] - histories.bz[histories.bz.length - 2]) * 5 : 0;
+            let currentChaos = Math.min(100, (speedVar + bzVar + (cosmicData.kp_index * 10)) / 2).toFixed(1);
+
+            dataDiv.innerHTML = html || '<div>SCANNING...</div>';
+            statusDiv.innerHTML = `LATEST SYNC: ${new Date().toLocaleTimeString()} • ${loaded} METRICS ACTIVE • CHAOS INDEX: ${currentChaos}%`;
+            updateHeatmap();
+        }
+
+        fetchCosmicData();
+        setInterval(fetchCosmicData, 60000);
+
+        // --- DRAWING FUNCTIONS ---
+
+        function drawGraphHelper(title, history, mx, my, w, h, color, maxVal, unit) {
+            ctx.save(); ctx.translate(mx, my);
+            ctx.strokeStyle = 'rgba(0, 150, 255, 0.1)'; ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                let y = i * h / 4; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            }
+            ctx.fillStyle = color; ctx.font = '10px Courier New'; ctx.fillText(title, 0, -5);
+
+            if (history.length > 1) {
+                ctx.beginPath();
+                history.forEach((v, i) => {
+                    const x = i * (w / (HISTORY_LIMIT - 1));
+                    const y = h - (Math.abs(v) / maxVal) * h;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+
+                const lastV = history[history.length - 1];
+                const lastX = (history.length - 1) * (w / (HISTORY_LIMIT - 1));
+                const lastY = h - (Math.abs(lastV) / maxVal) * h;
+                ctx.beginPath(); ctx.arc(lastX, lastY, 3, 0, 6.28); ctx.fillStyle = '#fff'; ctx.fill();
+                ctx.fillStyle = color; ctx.fillText(lastV ? lastV.toFixed(1) + (unit || '') : '0', w + 5, lastY + 4);
+            }
+            ctx.restore();
+        }
+
+        function drawSystemTopology() {
+            const r = Math.min(canvas.width, canvas.height) * 0.2;
+            const cx = canvas.width / 2 + (canvas.width > 900 ? 100 : 0);
+            const cy = canvas.height / 2;
+            ctx.save(); ctx.translate(cx, cy);
+
+            // Background Orbits
+            ctx.strokeStyle = 'rgba(0, 200, 255, 0.1)';
+            [0.4, 0.7, 1.0].forEach(rr => { ctx.beginPath(); ctx.arc(0, 0, r * rr, 0, 6.28); ctx.stroke(); });
+
+            const keys = [
+                { k: 'plasma_speed', l: 'SPEED', max: 800 },
+                { k: 'plasma_density', l: 'DENSITY', max: 50 },
+                { k: 'mag_bt', l: 'MAG.BT', max: 40 },
+                { k: 'kp_index', l: 'KP', max: 9 },
+                { k: 'convi_idx', l: 'CONVI', max: 100 },
+                { k: 'f107_flux', l: 'FLUX', max: 300 }
+            ];
+
+            const step = 6.28 / keys.length;
+
+            // Draw Polygon
+            ctx.beginPath();
+            keys.forEach((d, i) => {
+                let v = (cosmicData[d.k] || 0.1) / d.max; v = Math.max(0.1, Math.min(1.2, v));
+                const rr = (v + Math.sin(t * 1.5 + i) * 0.03) * r;
+                const a = i * step - 1.57;
+                const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(0, 255, 150, 0.1)'; ctx.fill();
+            ctx.strokeStyle = 'rgba(0, 255, 150, 0.6)'; ctx.lineWidth = 2; ctx.stroke();
+
+            // Draw Dots and Labels
+            keys.forEach((d, i) => {
+                let v = (cosmicData[d.k] || 0.1) / d.max; v = Math.max(0.1, Math.min(1.2, v));
+                const rr = (v + Math.sin(t * 1.5 + i) * 0.03) * r;
+                const a = i * step - 1.57;
+                const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+                ctx.beginPath(); ctx.arc(x, y, 4, 0, 6.28); ctx.fillStyle = '#0f0'; ctx.fill();
+                ctx.fillStyle = '#6cf'; ctx.font = '10px Courier New'; ctx.textAlign = 'center';
+                ctx.fillText(d.l, Math.cos(a) * (r + 30), Math.sin(a) * (r + 30));
+            });
+            ctx.restore();
+        }
+
+        let t = 0;
+        function loop() {
+            t += 0.016;
+            ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const cx = canvas.width / 2, cy = canvas.height / 2;
+
+            // Stars
+            stars.forEach(s => {
+                const tw = Math.sin(t * s.twinkle * 15 + s.x) * 0.2;
+                ctx.fillStyle = `rgba(180,220,255,${Math.max(0.1, s.baseAlpha + tw)})`;
+                ctx.fillRect(s.x, s.y, s.size, s.size);
+            });
+
+            // Formulas
+            formulaObjs.forEach(f => {
+                f.alpha = Math.sin(t * 0.4 + f.phase) * 0.5 + 0.5;
+                ctx.fillStyle = `rgba(100,200,255,${f.alpha * 0.2})`;
+                ctx.font = '14px Courier New';
+                ctx.fillText(f.text, f.x + Math.sin(t * 0.5 + f.phase) * 30, f.y + Math.cos(t * 0.5 + f.phase) * 20);
+            });
+
+            // Topology
+            drawSystemTopology();
+
+            // Right Column Graphs (3 Columns for more data)
+            if (canvas.width > 1000) {
+                const w = 160, h = 60;
+                const x1 = canvas.width - 200;
+                const x2 = canvas.width - 400;
+
+                // Column 1
+                drawGraphHelper('SOLAR SPEED', histories.speed, x1, 80, w, h, '#0af', 1000, '');
+                drawGraphHelper('PLASMA DENSITY', histories.density, x1, 180, w, h, '#0ff', 50, '');
+                drawGraphHelper('MAG FIELD BT', histories.bt, x1, 280, w, h, '#f0f', 50, '');
+                drawGraphHelper('CONVI IDX', histories.convi, x1, 380, w, h, '#0ff', 100, '%');
+
+                // Column 2
+                drawGraphHelper('KP INDEX', histories.kp, x2, 80, w, h, '#f80', 9, '');
+                drawGraphHelper('PROTON FLUX', histories.proton, x2, 180, w, h, '#0f8', 1, '');
+                drawGraphHelper('SOLAR PRESSURE', histories.pressure, x2, 280, w, h, '#f44', 20, '');
+                drawGraphHelper('MAG FIELD BZ', histories.bz, x2, 380, w, h, '#44f', 20, '');
+            }
+
+            // Decorative Rays
+            const rayCount = 8;
+            for (let i = 0; i < rayCount; i++) {
+                ctx.beginPath();
+                const ang = t * 0.1 + (i * Math.PI * 2 / rayCount);
+                const r1 = 150 + Math.sin(t + i) * 50;
+                const r2 = 400 + Math.cos(t * 0.5 + i) * 100;
+                ctx.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
+                ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
+                ctx.strokeStyle = `rgba(0, 255, 255, ${0.05 + 0.05 * Math.sin(t)})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+
+</html>
