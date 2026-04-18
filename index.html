@@ -419,8 +419,8 @@
             const kpData = await fetchWithProxy('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
             const scalesData = await fetchWithProxy('https://services.swpc.noaa.gov/products/noaa-scales.json');
 
-            if (kpData && kpData.length > 1) {
-                cosmicData.kp_index = parseFloat(kpData[kpData.length - 1][1]) || 0;
+            if (kpData && kpData.length > 0) {
+                cosmicData.kp_index = parseFloat(kpData[kpData.length - 1].Kp) || 0;
                 updateHistory('kp', cosmicData.kp_index);
                 html += '<div class="category">GEOMAGNETIC ACTIVITY</div>';
                 html += `<div class="row"><span class="label">Kp Index</span><span class="val ${getColorClass(cosmicData.kp_index, { watch: 4, warn: 5, danger: 7 })}">${cosmicData.kp_index}</span></div>`;
@@ -430,7 +430,7 @@
 
             const dstData = await fetchWithProxy('https://services.swpc.noaa.gov/products/kyoto-dst.json');
             if (dstData && dstData.length > 0) {
-                cosmicData.dst_index = parseFloat(dstData[dstData.length - 1][1]) || 0;
+                cosmicData.dst_index = parseFloat(dstData[dstData.length - 1].dst) || 0;
                 updateHistory('dst', cosmicData.dst_index);
                 html += `<div class="row"><span class="label">Dst Index</span><span class="val ${getColorClass(cosmicData.dst_index, { danger_neg: -100 })}">${cosmicData.dst_index} nT</span></div>`;
                 heatmapValues.push({ color: getColor(cosmicData.dst_index, { danger_neg: -100 }) });
